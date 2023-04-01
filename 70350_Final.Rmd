@@ -1,0 +1,376 @@
+---
+title: "70350_HomeWork"
+author: "Jim Jirsa"
+date: "2023-03-31"
+output: html_document
+---
+
+```{python PYTHON_ONE, include=FALSE}
+
+import requests
+import pandas as pd
+import json
+import sys
+import time
+from sodapy import Socrata
+
+
+req = requests.Session()
+
+headers = {
+'method': 'GET',   
+'authority': 'www.thewindycityagent.com',          
+'path': '/api-site/search/realTimeListings?gclid=Cj0KCQiApKagBhC1ARIsAFc7Mc76yS19Dct_LPvAY0CvXywBogj6Pb2y-cCC8uSF2DlsH7LZGscymRgaAjFiEALw_wcB&page=1&listingSort=RELEVANCE&pageSize=24&isSearching=true&siteId=17425&key=Chicago, IL&keywordType=city&purchaseType-For-Sale-Rent=1&mapSearch=false&zoom=10&threshold=10&mode=grid+null&listingSortOptions=[{"label":"Default","value":"RELEVANCE"},{"label":"Price-High To Low","value":"PRICE_DESC"},{"label":"Price-Low To High","value":"PRICE_ASC"},{"label":"Newest Listings","value":"MLS_LIST_DATE_L_DESC"},{"label":"Beds (Most)","value":"BEDROOMS_DESC"},{"label":"Baths (Most)","value":"BATHS_DESC"},{"label":"Year Built (Newest)","value":"BUILT_YEAR_DESC"},{"label":"Square Feet (Biggest)","value":"SQFT_DESC"}]&_t=1678414412275-1&timezone=GMT-0600',
+'scheme': 'https',
+'accept': 'application/json, text/plain, */*',
+'accept-encoding': 'gzip, deflate, br',
+'accept-language': 'en-US,en;q=0.9',
+'cookie': 'utm_source=bryanshortgoogle; _referer_t=0; SameSite=None; _VI=4LuDWQsb; utm_content=60540+homes+sale; utm_source_for_crm=bryanshortgoogle; ads_dimension=SiteDirect; timezone=GMT-0600; _thewindycityagent_com_visitor_email=; _thewindycityagent_com_visitor_name=; _thewindycityagent_com_user_login_status=; chatbox_visitor_session_id=697647312757518; chatbox_visitor_id=33600281; _gid=GA1.2.1113327859.1678414379; _gat=1; _gat_siteTracker1=1; _gat_classifyTracker=1; _gat_customTracker0=1; _clck=1kdlxcl|1|f9s|0; g_state={"i_p":1678421585827,"i_l":1}; JSESSIONID=0EAA115DBDEC135307218453A69E480B; _gac_UA-75813236-3=1.1678414412.Cj0KCQiApKagBhC1ARIsAFc7Mc76yS19Dct_LPvAY0CvXywBogj6Pb2y-cCC8uSF2DlsH7LZGscymRgaAjFiEALw_wcB; _gac_UA-121171471-1=1.1678414412.Cj0KCQiApKagBhC1ARIsAFc7Mc76yS19Dct_LPvAY0CvXywBogj6Pb2y-cCC8uSF2DlsH7LZGscymRgaAjFiEALw_wcB; _gac_UA-121171471-7=1.1678414412.Cj0KCQiApKagBhC1ARIsAFc7Mc76yS19Dct_LPvAY0CvXywBogj6Pb2y-cCC8uSF2DlsH7LZGscymRgaAjFiEALw_wcB; _gac_UA-132195683-1=1.1678414412.Cj0KCQiApKagBhC1ARIsAFc7Mc76yS19Dct_LPvAY0CvXywBogj6Pb2y-cCC8uSF2DlsH7LZGscymRgaAjFiEALw_wcB; _uetsid=140da5e0bee911edb4d11b4e933e3e12; _uetvid=140d92b0bee911ed9edf0949ef05216e; _ga=GA1.1.1522131468.1678414379; _ga_4WF4X3RBS6=GS1.1.1678414379.1.1.1678414412.27.0.0; _clsk=hzdbao|1678414412888|4|1|u.clarity.ms/collect',
+'currentdataid': '0',
+'currentsiteid': '17425',
+'orgin': 'https://www.chicagorealestatemall.com',
+'referer': 'https://www.thewindycityagent.com/listing?gclid=Cj0KCQiApKagBhC1ARIsAFc7Mc76yS19Dct_LPvAY0CvXywBogj6Pb2y-cCC8uSF2DlsH7LZGscymRgaAjFiEALw_wcB&purchaseType-For-Sale-Rent=1&keywordType=city&zoom=11&page=1&key=Chicago%2C%20IL&utm_source=bryanshortgoogle&utm_content=60540%20homes%20sale',
+'sec-ch-ua': '"Google Chrome";v="111", "Not(A:Brand";v="8", "Chromium";v="111"',
+'sec-ch-ua-mobile': '?0',
+'sec-ch-ua-platform': '"macOS"',
+'sec-fetch-dest': 'empty',
+'sec-fetch-mode': 'cors',
+'sec-fetch-site': 'same-origin',
+'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36'  }
+
+
+payload = {"limit":'500',"sort":"DESC","order":"timestamp_created","criteria":{"feed":"mred","search_type":["Residential"],"sort_by":"DESC-timestamp_created","latitude":"41.882503600757","longitude":"-87.692624321485","zoom":"11","_ppc":"condos in chicago il","gclid":"Cj0KCQiApKagBhC1ARIsAFc7Mc4rNqxNFLVwCSxlX0AM9msVlYrHBkvTZXq4leZj9Yg9B889PCpeZuQaAqX6EALw_wcB","usersearch":"1"},"feed":"mred"}
+
+
+payload_json = json.dumps(payload)
+
+data = requests.get('https://www.thewindycityagent.com/api-site/search/realTimeListings?gclid=Cj0KCQiApKagBhC1ARIsAFc7Mc76yS19Dct_LPvAY0CvXywBogj6Pb2y-cCC8uSF2DlsH7LZGscymRgaAjFiEALw_wcB&page=1&listingSort=RELEVANCE&pageSize=24&isSearching=true&siteId=17425&key=Chicago, IL&keywordType=city&purchaseType-For-Sale-Rent=1&mapSearch=false&zoom=10&threshold=10&mode=grid+null&listingSortOptions=[{"label":"Default","value":"RELEVANCE"},{"label":"Price-High To Low","value":"PRICE_DESC"},{"label":"Price-Low To High","value":"PRICE_ASC"},{"label":"Newest Listings","value":"MLS_LIST_DATE_L_DESC"},{"label":"Beds (Most)","value":"BEDROOMS_DESC"},{"label":"Baths (Most)","value":"BATHS_DESC"},{"label":"Year Built (Newest)","value":"BUILT_YEAR_DESC"},{"label":"Square Feet (Biggest)","value":"SQFT_DESC"}]&_t=1678414412275-1&timezone=GMT-0600',headers=headers)
+
+
+y = json.loads(data.content)
+test = pd.DataFrame(y['listings'])
+
+abc = []
+for x in range(1,400):
+  url = f'https://www.thewindycityagent.com/api-site/search/realTimeListings?gclid=Cj0KCQiApKagBhC1ARIsAFc7Mc76yS19Dct_LPvAY0CvXywBogj6Pb2y-cCC8uSF2DlsH7LZGscymRgaAjFiEALw_wcB&page={x}&listingSort=RELEVANCE&pageSize=24&isSearching=true&siteId=17425&key=Chicago'
+  xyz = requests.get(url +', IL&keywordType=city&purchaseType-For-Sale-Rent=1&mapSearch=false&zoom=10&threshold=10&mode=grid+null&listingSortOptions=[{"label":"Default","value":"RELEVANCE"},{"label":"Price-High To Low","value":"PRICE_DESC"},{"label":"Price-Low To High","value":"PRICE_ASC"},{"label":"Newest Listings","value":"MLS_LIST_DATE_L_DESC"},{"label":"Beds (Most)","value":"BEDROOMS_DESC"},{"label":"Baths (Most)","value":"BATHS_DESC"},{"label":"Year Built (Newest)","value":"BUILT_YEAR_DESC"},{"label":"Square Feet (Biggest)","value":"SQFT_DESC"}]&_t=1678414412275-1&timezone=GMT-0600',headers=headers)
+  xyz = json.loads(xyz.content)
+  xyz = pd.DataFrame(xyz['listings'])
+  abc.append(xyz)
+  sys.stdout.write('\r')
+  sys.stdout.write("[%-20s] %d%%" % ('='*x, x))
+  sys.stdout.flush()
+
+
+aaa = pd.concat(abc)
+
+```
+
+
+
+```{python PYTHON_TWO, include=FALSE}
+
+client = Socrata("datacatalog.cookcountyil.gov", 'CbWzbHoyM1sEIYOV6etDARylk')
+where_clause = "year >= '2022' and cook_municipality_name like '%City Of Chicago%'"
+client.timeout = 600
+results = client.get("tx2p-k2g9", limit = 1000000, where = where_clause)
+results_df = pd.DataFrame.from_records(results)
+
+results_df['Prop_Merge_Address'] = results_df['prop_address_full'] +", " + results_df['prop_address_city_name'] + ", " + results_df['prop_address_state'] + " " + results_df['prop_address_zipcode_1'].astype(str)
+
+aaa['Prop_Merge_Address'] = aaa['address'].str.replace('#', '')
+aaa['Prop_Merge_Address'] = aaa['Prop_Merge_Address'].str.upper()
+aaa['Prop_Merge_Address'].unique()
+
+test = aaa.merge(results_df, on = 'Prop_Merge_Address', how = 'left')
+test = test.dropna(subset = ['pin'])
+test["pin2"] = test["pin"].astype(str).apply(lambda num: f"{num[0:2]}-{num[2:4]}-{num[4:7]}-{num[7:10]}-{num[10:]}")
+
+uniq_test = test['pin'].unique().tolist()
+
+list_chunked = [uniq_test[i:i + 2000] for i in range(0, len(uniq_test), 2000 )]
+
+ass_list = []
+vau = 0
+for unqpin in list_chunked:
+  unqpin = tuple(unqpin)
+  client = Socrata("datacatalog.cookcountyil.gov", 'CbWzbHoyM1sEIYOV6etDARylk')
+
+  where_clause = f"pin IN {unqpin}"
+
+  res = client.get("uqb9-r7vn", limit = 100000, where = where_clause)
+  res_df = pd.DataFrame.from_records(res)
+  ass_list.append(res_df)
+  time.sleep(20)
+  vau += 1
+  print(vau)
+
+res_df = pd.concat(ass_list)
+res_df = res_df[res_df['year'] == res_df.groupby('pin')['year'].transform('max')]
+res_df = res_df[['pin', 'certified', 'first_pass']]
+res_df[['certified', 'first_pass']] = res_df[['certified', 'first_pass']].astype(int)
+
+test = test.merge(res_df, on = 'pin', how = 'left')
+
+ass_list = []
+vau = 0
+
+for unqpin in list_chunked:
+  unqpin = tuple(unqpin)
+  client = Socrata("datacatalog.cookcountyil.gov", 'CbWzbHoyM1sEIYOV6etDARylk')
+
+  where_clause = f"pin IN {unqpin}"
+
+  res = client.get("bcnq-qi2z", limit = 100000, where = where_clause)
+  res_df = pd.DataFrame.from_records(res)
+  ass_list.append(res_df)
+  time.sleep(20)
+  vau += 1
+  print(vau)
+
+res_df = pd.concat(ass_list)
+res_df = res_df[res_df['tax_year'] == res_df.groupby('pin')['tax_year'].transform('max')]
+test = test.merge(res_df, on = 'pin', how = 'left')
+
+del res_df
+del results_df
+del aaa
+del abc
+del results
+del ass_list
+```
+
+```{undefined eval=FALSE, include=FALSE}
+
+#test2 = test
+
+#object_cols = test2.select_dtypes(include=['object'])
+#float_cols = object_cols.apply(lambda x: pd.to_numeric(x, errors='coerce').notnull().any())
+
+# convert the float columns to floats, handling NA values
+#for col in float_cols.index[float_cols]:
+#    test2[col] = pd.to_numeric(test2[col], errors='coerce')
+
+# convert float columns to float dtype
+#for col in float_cols.index[float_cols]:
+#    test2[col] = test2[col].astype(float)
+      
+#test2.info()
+#test.info()
+
+```
+
+
+``` {r}
+library(tidyverse)
+library(rtweet)
+library(lubridate)
+library("readxl")
+library(ggplot2)
+library(Hmisc)
+library(penalized)
+library(MASS)
+library(corrplot)
+library(reticulate)
+library(ggmap)
+library(plotly)
+library('DT')
+library(future)
+
+df <- py$test
+
+names(df)
+
+
+df$longitude = as.numeric(df$longitude) * 100000
+df$latitude = as.numeric(df$latitude) * 100000
+
+df$id <-  as.factor(df$id)
+
+df <- df %>%
+  filter(primaryType == 'Residential', sqft != 0,
+         builtYear > 0) %>%
+  mutate(byexp = (2023 - builtYear) ** 2) %>%
+  distinct(id, .keep_all = TRUE)
+
+
+ggplot(data = df, aes(x = price)) +
+  geom_histogram()
+
+df_cols <- df %>%
+  dplyr::select(price, builtYear, bedrooms, bathrooms, sqft, longitude, latitude)
+
+corrplot.mixed(corr = cor(df_cols, use = 'pairwise.complete.obs'), order = 'AOE')
+
+
+
+lin_mod = lm(price ~ 1 + builtYear + bedrooms + certified +
+               bathrooms + sqft + longitude +
+               latitude ,data = df)
+
+rlin_mod = rlm(price ~ 1 + builtYear + bedrooms + certified +
+               bathrooms + sqft + longitude +
+               latitude ,data = df, psi = psi.bisquare)
+
+summary(lin_mod)
+summary(rlin_mod)
+plot(lin_mod)
+
+df$pred <- predict(lin_mod, df)
+df$pp <- df$price
+
+lin_mod$coefficients
+
+```
+
+
+
+``` {r}
+
+df <- py$test
+df$id <-  as.factor(df$id)
+
+
+df$longitude = as.numeric(df$longitude) * 100000
+df$latitude = as.numeric(df$latitude) * 100000
+
+
+df <- df %>%
+  filter(primaryType == 'Residential', sqft != 0,
+         builtYear > 0) %>%
+  mutate(byexp = (2023 - builtYear) ** 2) %>%
+  distinct(id, .keep_all = TRUE)
+
+df_cols <- df %>%
+  dplyr::select(price, builtYear, bedrooms, bathrooms, sqft, longitude, latitude, certified,
+                o_hare_noise, pri_est_land, pri_est_bldg)
+df_cols$o_hare_noise <-as.double(df_cols$o_hare_noise)
+df_cols$pri_est_bldg <-as.double(df_cols$pri_est_bldg)
+df_cols$pri_est_land <-as.double(df_cols$pri_est_land)
+
+
+
+lin_mod = rlm(price ~ 1 + builtYear + bedrooms + certified +
+               bathrooms + sqft + longitude +
+               latitude + o_hare_noise + pri_est_land + pri_est_bldg, data = df_cols)
+
+summary(lin_mod)
+
+
+
+df_cols$pred <- predict(lin_mod, df_cols)
+df_cols$pp <- df$price
+df_cols$PriceOverMarket <- df_cols$price - df_cols$pred
+
+
+```
+
+
+```{r}
+
+df$o_hare_noise <-as.double(df$o_hare_noise)
+df$pri_est_bldg <-as.double(df$pri_est_bldg)
+df$pri_est_land <-as.double(df$pri_est_land)
+
+bootstrapping <- function(df) {
+  df <- df
+  
+  sampledRows <- sample(1:nrow(df), nrow(df), replace = TRUE)
+  
+  df <- df[sampledRows, ]
+  
+  bsMod <- rlm(price ~ 1 + builtYear + bedrooms + certified +
+               bathrooms + sqft + longitude +
+               latitude + o_hare_noise + pri_est_land + pri_est_bldg, data = df)
+  results <- broom::tidy(bsMod)
+  
+  return(results)
+}
+
+bs_test <- future(replicate(1000, bootstrapping(df), 
+                   simplify = FALSE))
+
+bsCombined <- do.call("rbind", value(bs_test))
+
+hist(bsCombined$statistic[bsCombined$term == "bathrooms"], 
+     col = "black")
+
+
+```
+
+
+
+
+``` {r}
+
+df <- py$test
+df$id <-  as.factor(df$id)
+
+
+df$longitude = as.numeric(df$longitude) * 100000
+df$latitude = as.numeric(df$latitude) * 100000
+
+
+df <- df %>%
+  filter(primaryType == 'Residential', sqft != 0,
+         builtYear > 0) %>%
+  mutate(byexp = (2023 - builtYear) ** 2) %>%
+  distinct(id, .keep_all = TRUE)
+
+
+df$o_hare_noise <-as.double(df$o_hare_noise)
+df$pri_est_bldg <-as.double(df$pri_est_bldg)
+df$pri_est_land <-as.double(df$pri_est_land)
+
+
+
+lin_mod = rlm(price ~ 1 + builtYear + bedrooms + certified +
+               bathrooms + sqft + longitude +
+               latitude + o_hare_noise + pri_est_land + pri_est_bldg, data = df)
+
+summary(lin_mod)
+
+
+
+df$pred <- predict(lin_mod, df)
+df$pp <- df$price
+df$PriceOverMarket <- df$price - df$pred
+
+plot(lin_mod)
+
+```
+
+
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+fig <- df 
+fig <- fig %>%
+  plot_ly(
+    type = 'scattermapbox',
+    lat = ~lat,
+    lon = ~lon,
+    coloraxis = 'coloraxis',
+    radius = 10,
+    color = ~log(PriceOverMarket),
+    text = sprintf(
+  '<i>Price</i>: $%0.2f <br /><i>Assessed Price</i>: $%0.2f <br /><i>Predicted Price</i>: $%0.2f <br /><i>PriceLessPred</i>: $%0.2f <br /><i>Seller</i>: %s <br /><i>Agent</i>: %s <br />',
+  df$pp, df$certified, df$pred, df$PriceOverMarket, df$mail_address_name, df$agentName))
+
+fig <- fig %>%
+  layout(
+    mapbox = list(
+      style="stamen-terrain",
+      center = list(lon = -87.6298, lat = 41.8781), zoom = 10), coloraxis = list(colorscale = "Viridis"))
+
+fig
+
+
+```
+
+
+```{undefined eval=FALSE, include=FALSE}
+datatable(df, options = list(searchable = TRUE))
+```
+
